@@ -1,3 +1,6 @@
+[collectPlans.IosevkazFixed]
+from = ["IosevkazFixed"]
+
 [buildPlans.IosevkazFixed]
 family = "Iosevkaz Fixed"
 spacing = "fixed"

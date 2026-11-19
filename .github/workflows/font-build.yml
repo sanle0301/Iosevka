@@ -55,7 +55,7 @@ jobs:
 
       - name: Build SuperTTC
         working-directory: iosevka
-        run: npm run build -- sgr-ttc::${{ env.PLAN_NAME }} --jCmd=$(nproc)
+        run: npm run build -- super-ttc::${{ env.PLAN_NAME }} --jCmd=$(nproc)
 
       - name: Collect output
         run: |
