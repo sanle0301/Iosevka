@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       iosevka_ref:
-        description: "Iosevka tag/branch to build (e.g. v33.0.0 or main)"
+        description: "Iosevka tag/branch to build (e.g. v34.9.1 or main)"
         default: "main"
       release:
         description: "Also publish the .ttc files as a GitHub Release"
@@ -12,7 +12,7 @@ on:
         default: false
 
 env:
-  PLAN_NAME: IosevkazFixed   # must match [buildPlans.IosevkaCustom] in the toml
+  PLAN_NAME: IosevkazFixed   # must match [collectPlans.IosevkazFixed] in private-build-plans.toml
 
 concurrency:
   group: build-font
@@ -27,19 +27,19 @@ jobs:
     timeout-minutes: 300     # hard limit per job is 6 hours
     steps:
       - name: Checkout this repo (build plan)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: plan
 
       - name: Checkout Iosevka source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: be5invis/Iosevka
-          ref: ${{ inputs.iosevka_ref }}
+          ref: ${{ inputs.iosevka_ref || 'main' }}
           path: iosevka
           fetch-depth: 1
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
 
@@ -57,16 +57,18 @@ jobs:
         working-directory: iosevka
         run: npm run build -- sgr-ttc::${{ env.PLAN_NAME }} --jCmd=$(nproc)
 
-      - name: Output size
+      - name: Collect output
         run: |
-          find iosevka/dist -name '*.ttc' -exec ls -lh {} \;
+          mkdir -p out
+          find iosevka/dist -name '*.ttc' -exec cp -v {} out/ \;
+          ls -lh out
           df -h .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.PLAN_NAME }}-ttc
-          path: iosevka/dist/**/*.ttc
+          path: out/*.ttc
           retention-days: 30
           if-no-files-found: error
 
@@ -76,4 +78,4 @@ jobs:
         with:
           tag_name: ${{ env.PLAN_NAME }}-${{ github.run_number }}
           name: ${{ env.PLAN_NAME }} build ${{ github.run_number }}
-          files: iosevka/dist/**/*.ttc
+          files: out/*.ttc
